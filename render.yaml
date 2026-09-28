@@ -1,0 +1,54 @@
+# Render blueprint — deploy via https://dashboard.render.com/blueprints
+# (New > Blueprint, point it at your fork/copy of this repo).
+#
+# This provisions:
+#   - a free Postgres instance
+#   - the Go API as a Docker web service, built from backend/Dockerfile
+#
+# After the first deploy, apply the schema once (see README's
+# "Deploy to a free test environment" section) — this blueprint does not
+# run migrations automatically, since a first deploy has no data to protect
+# and a one-line psql command is clearer than hiding it in a build hook.
+
+databases:
+  - name: trip-os-db
+    plan: free
+    postgresMajorVersion: "16"
+
+services:
+  - type: web
+    name: trip-os-api
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: free
+    healthCheckPath: /api/v1/healthz
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: trip-os-db
+          property: connectionString
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: CSRF_SECRET
+        generateValue: true
+      - key: COOKIE_SECURE
+        value: "true"
+      - key: CROSS_SITE_COOKIES
+        value: "true"
+      # Set this to your deployed frontend's exact origin after you deploy
+      # it to Vercel (step 2 in the README) — e.g. https://trip-os.vercel.app
+      # Leave the placeholder in place for the very first deploy; the API
+      # will boot but reject cross-origin requests until you update it.
+      - key: ALLOWED_ORIGIN
+        value: https://REPLACE-WITH-YOUR-VERCEL-URL.vercel.app
+      - key: PLACE_PROVIDER
+        value: mock
+      - key: PLANNING_PROVIDER
+        value: mock
+      - key: TRANSPORT_PROVIDER
+        value: mock
+      - key: LOG_LEVEL
+        value: info
