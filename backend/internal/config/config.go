@@ -4,26 +4,28 @@ import (
 	"fmt"
 	"os"
 	"strconv"
+
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
-	AppEnv     string
-	HTTPPort   string
+	AppEnv      string
+	HTTPPort    string
 	DatabaseURL string
-	RedisURL   string
+	RedisURL    string
 
 	JWTAccessSecret      string
 	JWTAccessTTLMinutes  int
 	RefreshTokenTTLHours int
 
-	CookieDomain string
-	CookieSecure bool
+	CookieDomain     string
+	CookieSecure     bool
 	CrossSiteCookies bool // true when frontend and backend are on different domains (e.g. Vercel + Render)
-	CSRFSecret   string
-	AllowedOrigin string // exact frontend origin for CORS; required when CrossSiteCookies is true
+	CSRFSecret       string
+	AllowedOrigin    string // exact frontend origin for CORS; required when CrossSiteCookies is true
 
-	PlaceProvider    string
-	PlanningProvider string
+	PlaceProvider     string
+	PlanningProvider  string
 	TransportProvider string
 
 	RateLimitAuthPerMin      int
@@ -33,25 +35,31 @@ type Config struct {
 }
 
 func Load() (*Config, error) {
+
+	if err := godotenv.Load(); err != nil {
+		// Optional: don't fail if .env isn't present
+		fmt.Println("warning: .env file not loaded:", err)
+	}
+
 	cfg := &Config{
-		AppEnv:               getEnv("APP_ENV", "development"),
-		HTTPPort:             getEnv("PORT", getEnv("HTTP_PORT", "8080")), // most PaaS inject PORT
-		DatabaseURL:          os.Getenv("DATABASE_URL"),
-		RedisURL:             os.Getenv("REDIS_URL"),
-		JWTAccessSecret:      os.Getenv("JWT_ACCESS_SECRET"),
-		JWTAccessTTLMinutes:  getEnvInt("JWT_ACCESS_TTL_MINUTES", 15),
-		RefreshTokenTTLHours: getEnvInt("REFRESH_TOKEN_TTL_HOURS", 720),
-		CookieDomain:         os.Getenv("COOKIE_DOMAIN"),
-		CookieSecure:         getEnvBool("COOKIE_SECURE", false),
-		CrossSiteCookies:     getEnvBool("CROSS_SITE_COOKIES", false),
-		CSRFSecret:           os.Getenv("CSRF_SECRET"),
-		AllowedOrigin:        os.Getenv("ALLOWED_ORIGIN"),
-		PlaceProvider:        getEnv("PLACE_PROVIDER", "mock"),
-		PlanningProvider:     getEnv("PLANNING_PROVIDER", "mock"),
-		TransportProvider:    getEnv("TRANSPORT_PROVIDER", "mock"),
+		AppEnv:                   getEnv("APP_ENV", "development"),
+		HTTPPort:                 getEnv("PORT", getEnv("HTTP_PORT", "8080")), // most PaaS inject PORT
+		DatabaseURL:              os.Getenv("DATABASE_URL"),
+		RedisURL:                 os.Getenv("REDIS_URL"),
+		JWTAccessSecret:          os.Getenv("JWT_ACCESS_SECRET"),
+		JWTAccessTTLMinutes:      getEnvInt("JWT_ACCESS_TTL_MINUTES", 15),
+		RefreshTokenTTLHours:     getEnvInt("REFRESH_TOKEN_TTL_HOURS", 720),
+		CookieDomain:             os.Getenv("COOKIE_DOMAIN"),
+		CookieSecure:             getEnvBool("COOKIE_SECURE", false),
+		CrossSiteCookies:         getEnvBool("CROSS_SITE_COOKIES", false),
+		CSRFSecret:               os.Getenv("CSRF_SECRET"),
+		AllowedOrigin:            os.Getenv("ALLOWED_ORIGIN"),
+		PlaceProvider:            getEnv("PLACE_PROVIDER", "mock"),
+		PlanningProvider:         getEnv("PLANNING_PROVIDER", "mock"),
+		TransportProvider:        getEnv("TRANSPORT_PROVIDER", "mock"),
 		RateLimitAuthPerMin:      getEnvInt("RATE_LIMIT_AUTH_PER_MIN", 10),
 		RateLimitGeneratePerHour: getEnvInt("RATE_LIMIT_GENERATE_PER_HOUR", 6),
-		LogLevel:             getEnv("LOG_LEVEL", "info"),
+		LogLevel:                 getEnv("LOG_LEVEL", "info"),
 	}
 
 	if cfg.CrossSiteCookies && cfg.AllowedOrigin == "" {
